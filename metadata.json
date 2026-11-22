@@ -1,0 +1,6 @@
+{
+  "name": "Genius Coaching Centre | Class 9 & 10 Coaching in Bhabua",
+  "description": "Genius Coaching Centre, Bhabua offers Class 9 & 10 coaching for BSEB and CBSE students. Learn Mathematics, Science and SST with regular practice and weekly tests.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

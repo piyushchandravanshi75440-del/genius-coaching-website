@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://genius-coaching-centre-class-9-10-coaching-in-bha.ai.studio/sitemap.xml

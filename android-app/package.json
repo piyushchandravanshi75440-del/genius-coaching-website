@@ -1,0 +1,11 @@
+{
+  "name": "gcc-ai-android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Capacitor Android wrapper configuration for GCC AI Teacher Assistant (reuses root React dist build).",
+  "scripts": {
+    "build:web-bundle": "cd .. && npm run build",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android"
+  }
+}

@@ -1,0 +1,134 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Strict single-admin authorization check (case-insensitive email + verified)
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == "piyushchandravanshi75440@gmail.com"
+        && request.auth.token.email_verified == true;
+    }
+
+    // Path ID poisoning guard
+    function isValidId(id) {
+      return id is string
+        && id.size() >= 4
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Strict schema & boundary validation for StudyMaterial documents
+    function isValidStudyMaterial(data) {
+      return data.keys().hasAll([
+          'materialId',
+          'title',
+          'class',
+          'board',
+          'subject',
+          'chapter',
+          'materialType',
+          'description',
+          'storagePath',
+          'downloadUrl',
+          'status',
+          'createdAt',
+          'updatedAt',
+          'createdBy'
+        ])
+        && data.keys().hasOnly([
+          'materialId',
+          'title',
+          'class',
+          'board',
+          'subject',
+          'chapter',
+          'examYear',
+          'materialType',
+          'description',
+          'storagePath',
+          'downloadUrl',
+          'status',
+          'createdAt',
+          'updatedAt',
+          'createdBy'
+        ])
+        && isValidId(data.materialId)
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 160
+        && data.class in ['Class 9', 'Class 10']
+        && data.board in ['BSEB', 'CBSE']
+        && data.subject in ['Mathematics', 'Science', 'Social Science', 'Hindi', 'Sanskrit']
+        && data.chapter is string && data.chapter.size() <= 140
+        && (!('examYear' in data) || (data.examYear is string && data.examYear.size() <= 20))
+        && data.materialType in [
+          'Notes',
+          'Revision',
+          'Previous Year Question (PYQ)',
+          'Sample Paper',
+          'Model Paper',
+          'Important Questions',
+          'Formula Sheets',
+          'Revision Notes',
+          'Sample Papers'
+        ]
+        && data.description is string && data.description.size() <= 500
+        && data.storagePath is string && data.storagePath.size() >= 10 && data.storagePath.size() <= 300
+        && data.downloadUrl is string && data.downloadUrl.size() <= 1000
+        && data.status in ['draft', 'published']
+        && data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 && data.createdBy == request.auth.uid
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /studyMaterials/{materialId} {
+      // Single-document read: Admin can read all; public can read ONLY published materials
+      allow get: if isValidId(materialId) && (
+        isAdmin() || resource.data.status == 'published'
+      );
+
+      // Collection list query: Admin can list all; public queries MUST filter status == 'published'
+      allow list: if isAdmin() || resource.data.status == 'published';
+
+      // Create: Strict single admin only, with full schema & server timestamp validation
+      allow create: if isAdmin()
+        && isValidId(materialId)
+        && isValidStudyMaterial(request.resource.data)
+        && request.resource.data.materialId == materialId
+        && request.resource.data.storagePath == ('study-materials/' + materialId + '/document.pdf')
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // Update: Strict single admin only, immutable fields locked, server timestamp enforced
+      allow update: if isAdmin()
+        && isValidId(materialId)
+        && isValidStudyMaterial(request.resource.data)
+        && request.resource.data.materialId == resource.data.materialId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title',
+          'class',
+          'board',
+          'subject',
+          'chapter',
+          'examYear',
+          'materialType',
+          'description',
+          'storagePath',
+          'downloadUrl',
+          'status',
+          'updatedAt'
+        ]);
+
+      // Delete: Strict single admin only
+      allow delete: if isAdmin() && isValidId(materialId);
+    }
+  }
+}

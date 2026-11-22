@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "StudyMaterial": {
+      "title": "StudyMaterial",
+      "description": "Academic PDF study material for Class 9 and Class 10 students (BSEB & CBSE).",
+      "type": "object",
+      "properties": {
+        "materialId": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique identifier for the study material document and storage folder."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160,
+          "description": "Title of the study material."
+        },
+        "class": {
+          "type": "string",
+          "enum": ["Class 9", "Class 10"],
+          "description": "Target academic class."
+        },
+        "board": {
+          "type": "string",
+          "enum": ["BSEB", "CBSE"],
+          "description": "Target education board."
+        },
+        "subject": {
+          "type": "string",
+          "enum": ["Mathematics", "Science", "Social Science", "Hindi", "Sanskrit"],
+          "description": "Subject name."
+        },
+        "chapter": {
+          "type": "string",
+          "maxLength": 140,
+          "description": "Chapter name or topic (required for Notes)."
+        },
+        "examYear": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Exam year (for Model Paper, Sample Paper, and PYQ)."
+        },
+        "materialType": {
+          "type": "string",
+          "enum": [
+            "Notes",
+            "Revision",
+            "Previous Year Question (PYQ)",
+            "Sample Paper",
+            "Model Paper",
+            "Important Questions",
+            "Formula Sheets",
+            "Revision Notes",
+            "Sample Papers"
+          ],
+          "description": "Category of the study material."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Short summary of the material."
+        },
+        "storagePath": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 300,
+          "description": "Firebase Storage path: study-materials/{materialId}/document.pdf"
+        },
+        "downloadUrl": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Firebase Storage download URL."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "published"],
+          "description": "Publication status controlling public visibility."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the material was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the material was last updated."
+        },
+        "createdBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID of the authorized administrator."
+        }
+      },
+      "required": [
+        "materialId",
+        "title",
+        "class",
+        "board",
+        "subject",
+        "chapter",
+        "materialType",
+        "description",
+        "storagePath",
+        "downloadUrl",
+        "status",
+        "createdAt",
+        "updatedAt",
+        "createdBy"
+      ]
+    }
+  },
+  "firestore": {
+    "/studyMaterials/{materialId}": {
+      "schema": {
+        "$ref": "#/entities/StudyMaterial"
+      },
+      "description": "Collection storing Class 9 & 10 PDF study material metadata."
+    }
+  }
+}

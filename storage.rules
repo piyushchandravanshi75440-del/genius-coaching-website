@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Global default-deny safety net
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Strict single-admin authorization check (case-insensitive email + verified)
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == "piyushchandravanshi75440@gmail.com"
+        && request.auth.token.email_verified == true;
+    }
+
+    // Validate PDF content type and 20 MB maximum file size
+    function isValidPdfUpload() {
+      return request.resource != null
+        && request.resource.size <= 20 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+    }
+
+    // Check publication status in the app's provisioned Firestore database
+    function isPublishedMaterial(materialId) {
+      return firestore.exists(/databases/ai-studio-geniuscoachingce-6b6bad87-0d61-49d7-aed3-85940c1bf243/documents/studyMaterials/$(materialId))
+        && firestore.get(/databases/ai-studio-geniuscoachingce-6b6bad87-0d61-49d7-aed3-85940c1bf243/documents/studyMaterials/$(materialId)).data.status == 'published';
+    }
+
+    match /study-materials/{materialId}/document.pdf {
+      // Admin can always read; public can read ONLY when Firestore status == 'published'
+      allow read: if isAdmin() || isPublishedMaterial(materialId);
+
+      // Only the authorized admin can upload or replace a valid PDF (<= 20 MB)
+      allow create, update: if isAdmin() && isValidPdfUpload();
+
+      // Only the authorized admin can delete PDFs
+      allow delete: if isAdmin();
+    }
+  }
+}
